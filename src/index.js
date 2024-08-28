@@ -1,17 +1,21 @@
-import app from './app.js'
-import dotenv from 'dotenv'
-import {sequelize} from './config/db.js'
+import dotenv from 'dotenv';
+import express from 'express';
+import { sequelize } from './config/db.js';
 
-dotenv.config()
+dotenv.config();
 
-async function main(){
+const app = express(); 
+
+async function main() {
     try {
-        await sequelize.sync()
-        app.listen(process.env.PORT)
-        console.log(`App escuchando en el puerto: ${process.env.PORT}`)
+        await sequelize.authenticate();
+        await sequelize.sync();
+        app.listen(process.env.PORT, () => {
+            console.log(`App escuchando en el puerto: ${process.env.PORT}`);
+        });
     } catch (error) {
-        console.error('no se conecto la bd')
+        console.error('Error al conectar a la base de datos:', error);
     }
 }
 
-main()
+main();

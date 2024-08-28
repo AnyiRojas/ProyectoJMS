@@ -1,6 +1,4 @@
+import express from 'express';
+const app = express();
 
-const app = () => {
-  
-}
-
-export default app
+export default app;
