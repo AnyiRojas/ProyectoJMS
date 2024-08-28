@@ -7,8 +7,8 @@ class Usuario extends Model {
     // Método para crear un nuevo usuario
     static async createUsuario(usuario) {
         try {
-            const claveEncriptada = await bcrypt.hash(usuario.contrasena_usuario, 10); 
-            usuario.contrasena_usuario = claveEncriptada;
+            const claveEncriptada = await bcrypt.hash(usuario.contraseña, 10); // Usando un salt de 10
+            usuario.contraseña = claveEncriptada;
             return await this.create(usuario);
         } catch (error) {
             console.error(`Unable to create usuario: ${error}`);
@@ -26,20 +26,23 @@ class Usuario extends Model {
         }
     }
 
-    // Método para obtener un usuario por su ID
-    static async getUsuarioById(id) {
+    // Método para obtener un usuario por su documento
+    static async getUsuarioByDocum(docum_ento) {
         try {
-            return await this.findByPk(id);
+            return await this.findOne({ where: { docum_ento } });
         } catch (error) {
-            console.error(`Unable to find usuario by id: ${error}`);
+            console.error(`Unable to find usuario by document: ${error}`);
             throw error;
         }
     }
 
     // Método para actualizar un usuario
-    static async updateUsuario(id, updated_usuario) {
+    static async updateUsuario(docum_ento, updated_usuario) {
         try {
-            const usuario = await this.findByPk(id);
+            const usuario = await this.findOne({ where: { docum_ento } });
+            if (updated_usuario.contraseña) {
+                updated_usuario.contraseña = await bcrypt.hash(updated_usuario.contraseña, 10);
+            }
             return usuario.update(updated_usuario);
         } catch (error) {
             console.error(`Unable to update the usuario: ${error}`);
@@ -48,11 +51,11 @@ class Usuario extends Model {
     }
 
     // Método para alternar el estado del usuario
-    static async toggleUsuarioState(id) {
+    static async toggleUsuarioState(docum_ento) {
         try {
-            const usuario = await this.findByPk(id);
-            const newState = usuario.estado_usuario === '1' ? '0' : '1';
-            await usuario.update({ estado_usuario: newState });
+            const usuario = await this.findOne({ where: { docum_ento } });
+            const newState = usuario.estado === '1' ? '0' : '1';
+            await usuario.update({ estado: newState });
             return usuario;
         } catch (error) {
             console.error(`Unable to toggle usuario state: ${error}`);
@@ -61,59 +64,52 @@ class Usuario extends Model {
     }
 
     // Método para comparar contraseñas
-    async comparar(contrasena_usuario) {
-        try {
-            // Comparar la contraseña ingresada con la encriptada almacenada en la base de datos
-            return await bcrypt.compare(contrasena_usuario, this.contrasena_usuario);
-        } catch (error) {
-            console.error("Error al comparar las contraseñas:", error);
-            throw error;
-        }
+    async comparar(contrasena) {
+        return await bcrypt.compare(contrasena, this.contraseña);
     }
 }
 
 // Definición del modelo Usuario en Sequelize
 Usuario.init({
-    id_usuario: {
+    docum_ento: {
         type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
+        primaryKey: true
     },
-    nombre_usuario: {
+    NombreCompleto: {
         type: DataTypes.STRING(50),
         allowNull: false
     },
-    apellido_usuario: {
+    correo: {
+        type: DataTypes.STRING(30),
+        allowNull: false
+    },
+    telefono: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
+    direccion: {
         type: DataTypes.STRING(50),
         allowNull: false
     },
-    celular_usuario: {
-        type: DataTypes.BIGINT,
-        allowNull: false
-    },
-    correo_electronico_usuario: {
-        type: DataTypes.STRING(255),
+    estado: {
+        type: DataTypes.STRING(8),
         allowNull: false
     },
     usuario: {
         type: DataTypes.STRING(30),
         allowNull: false
     },
-    contrasena_usuario: {
-        type: DataTypes.TEXT,
+    contraseña: {
+        type: DataTypes.STRING(255),
         allowNull: false
     },
-    rol_usuario: {
-        type: DataTypes.ENUM('Cliente', 'Administrador', 'Vendedor', 'Domiciliario', 'Proveedor'),
-        allowNull: false
-    },
-    estado_usuario: {
-        type: DataTypes.CHAR,
+    rol: {
+        type: DataTypes.ENUM('Cliente', 'Administrador', 'Domiciliario', 'Empleado'),
         allowNull: false
     }
 }, {
     sequelize,
-    tableName: 'Usuario',
+    tableName: 'usuarios',
     timestamps: false,
     underscored: false,
 });
